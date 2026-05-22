@@ -46,6 +46,9 @@ class MainActivity : AppCompatActivity() {
     private var lastTapTime = 0L
     private var currentCombo = 0
     private val COMBO_TIME_WINDOW_MS = 800L // Must tap within 800ms to keep combo
+    
+    // Difficulty progression
+    private var currentSwitchInterval = IMAGE_SWITCH_INTERVAL_MS
 
     private val imageSwitcher = object : Runnable {
         override fun run() {
@@ -65,16 +68,16 @@ class MainActivity : AppCompatActivity() {
             currentImage.animate()
                 .scaleX(1.1f)
                 .scaleY(1.1f)
-                .setDuration(150)
+                .setDuration((currentSwitchInterval * 0.3).toLong())
                 .withEndAction {
                     currentImage.animate()
                         .scaleX(1f)
                         .scaleY(1f)
-                        .setDuration(100)
+                        .setDuration((currentSwitchInterval * 0.2).toLong())
                         .start()
                 }.start()
                 
-            handler.postDelayed(this, IMAGE_SWITCH_INTERVAL_MS)
+            handler.postDelayed(this, currentSwitchInterval)
         }
     }
 
@@ -154,6 +157,7 @@ class MainActivity : AppCompatActivity() {
         if (extraTimeMs == GAME_DURATION_MS) {
             score = 0
             currentCombo = 0
+            currentSwitchInterval = IMAGE_SWITCH_INTERVAL_MS
             updateScoreText()
         }
         
@@ -175,7 +179,18 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTick(tick: Long) {
-                updateTimeText((tick / TICK_INTERVAL_MS).toInt())
+                val secondsLeft = (tick / TICK_INTERVAL_MS).toInt()
+                updateTimeText(secondsLeft)
+                
+                // Progressive difficulty: speed up as time runs out
+                // At 10s: 500ms, At 5s: 400ms, At 2s: 300ms
+                if (extraTimeMs == GAME_DURATION_MS) {
+                    if (secondsLeft <= 3) {
+                        currentSwitchInterval = 300L
+                    } else if (secondsLeft <= 6) {
+                        currentSwitchInterval = 400L
+                    }
+                }
             }
         }.start()
     }
