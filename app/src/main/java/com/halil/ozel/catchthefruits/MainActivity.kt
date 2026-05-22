@@ -9,9 +9,11 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Button
 import android.widget.TextView
+import android.widget.FrameLayout
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -71,6 +73,12 @@ class MainActivity : AppCompatActivity() {
             val currentImage = imageArray[randomIndex]
             currentImage.visibility = View.VISIBLE
             
+            // Set up miss listener (if fruit disappears without being tapped)
+            currentImage.setOnClickListener {
+                increaseScore(it)
+                it.setOnClickListener(null) // Remove listener so it can't be double tapped
+            }
+            
             // Cartoon pop-in animation
             val randomRotation = Random.nextInt(-15, 15).toFloat()
             currentImage.rotation = randomRotation
@@ -83,6 +91,27 @@ class MainActivity : AppCompatActivity() {
                         .scaleX(1f)
                         .scaleY(1f)
                         .setDuration((currentSwitchInterval * 0.2).toLong())
+                        .withEndAction {
+                            // If it's still visible at the end of its cycle, it was missed
+                            if (currentImage.visibility == View.VISIBLE) {
+                                currentImage.setOnClickListener(null)
+                                // Shake the board slightly to indicate a miss
+                                binding.flGameBoard.animate()
+                                    .translationXBy(10f)
+                                    .setDuration(50)
+                                    .withEndAction {
+                                        binding.flGameBoard.animate()
+                                            .translationXBy(-20f)
+                                            .setDuration(50)
+                                            .withEndAction {
+                                                binding.flGameBoard.animate()
+                                                    .translationXBy(10f)
+                                                    .setDuration(50)
+                                                    .start()
+                                            }.start()
+                                    }.start()
+                            }
+                        }
                         .start()
                 }.start()
                 
@@ -188,6 +217,9 @@ class MainActivity : AppCompatActivity() {
         
         updateScoreText()
         
+        // Show floating text
+        showFloatingText(view, "+$pointsEarned")
+        
         // Pulse the score text (bigger pulse for combo)
         val scaleTarget = if (currentCombo >= 3) 1.4f else 1.2f
         binding.tvScore.animate()
@@ -212,6 +244,36 @@ class MainActivity : AppCompatActivity() {
                         view.visibility = View.INVISIBLE
                         view.alpha = 1f
                     }.start()
+            }.start()
+    }
+
+    private fun showFloatingText(view: View, text: String) {
+        val floatingText = TextView(this).apply {
+            this.text = text
+            textSize = 24f
+            setTextColor(resources.getColor(R.color.colorAccent, theme))
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setShadowLayer(4f, 0f, 4f, resources.getColor(R.color.colorPrimaryDark, theme))
+        }
+
+        val layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        
+        // Position the text roughly where the fruit was tapped
+        layoutParams.leftMargin = view.left + (view.width / 4)
+        layoutParams.topMargin = view.top + (view.height / 4)
+        
+        binding.flFloatingText.addView(floatingText, layoutParams)
+
+        // Animate floating up and fading out
+        floatingText.animate()
+            .translationYBy(-100f)
+            .alpha(0f)
+            .setDuration(600)
+            .withEndAction {
+                binding.flFloatingText.removeView(floatingText)
             }.start()
     }
 
