@@ -158,13 +158,17 @@ class MainActivity : AppCompatActivity() {
         
         setupSoundPool()
         
-        MobileAds.initialize(this) {}
-        
-        val adRequest = AdRequest.Builder().build()
-        binding.adView.loadAd(adRequest)
-        
-        loadInterstitialAd()
-        loadRewardedAd()
+        MobileAds.initialize(this) { initializationStatus ->
+            Log.d("MainActivity", "AdMob Initialized: $initializationStatus")
+            
+            // Load banner ad after initialization
+            val adRequest = AdRequest.Builder().build()
+            binding.adView.loadAd(adRequest)
+            
+            // Load other ads
+            loadInterstitialAd()
+            loadRewardedAd()
+        }
         
         imageArray.addAll(
             listOf(
@@ -426,13 +430,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Safe Interstitial Pacing: Only show every N games
-        if (gamesPlayed % INTERSTITIAL_FREQUENCY == 0) {
+        // Force show on first game for testing, then every N games
+        if (gamesPlayed == 1 || gamesPlayed % INTERSTITIAL_FREQUENCY == 0) {
             if (mInterstitialAd != null) {
+                Log.d("MainActivity", "Showing Interstitial Ad")
                 mInterstitialAd?.show(this)
                 // Load the next interstitial ad for the next time it's needed
                 loadInterstitialAd()
             } else {
-                Log.d("MainActivity", "The interstitial ad wasn't ready yet.")
+                Log.d("MainActivity", "The interstitial ad wasn't ready yet. Loading a new one.")
+                loadInterstitialAd()
             }
         }
 
