@@ -63,19 +63,42 @@ class MainActivity : AppCompatActivity() {
 
     private val imageSwitcher = object : Runnable {
         override fun run() {
+            // Hide all fruits and bomb
             imageArray.forEach { 
                 it.visibility = View.INVISIBLE 
                 it.scaleX = 0.5f
                 it.scaleY = 0.5f
                 it.rotation = 0f
             }
-            val randomIndex = Random.nextInt(imageArray.size)
-            val currentImage = imageArray[randomIndex]
+            binding.ivBomb.visibility = View.INVISIBLE
+            binding.ivBomb.scaleX = 0.5f
+            binding.ivBomb.scaleY = 0.5f
+            binding.ivBomb.rotation = 0f
+            
+            // 15% chance to spawn a bomb instead of a fruit
+            val isBomb = Random.nextInt(100) < 15
+            
+            val currentImage = if (isBomb) {
+                // Position bomb randomly in the grid
+                val randomFruit = imageArray[Random.nextInt(imageArray.size)]
+                val layoutParams = binding.ivBomb.layoutParams as FrameLayout.LayoutParams
+                layoutParams.leftMargin = randomFruit.left
+                layoutParams.topMargin = randomFruit.top
+                binding.ivBomb.layoutParams = layoutParams
+                binding.ivBomb
+            } else {
+                imageArray[Random.nextInt(imageArray.size)]
+            }
+            
             currentImage.visibility = View.VISIBLE
             
-            // Set up miss listener (if fruit disappears without being tapped)
+            // Set up click listener
             currentImage.setOnClickListener {
-                increaseScore(it)
+                if (isBomb) {
+                    hitBomb(it)
+                } else {
+                    increaseScore(it)
+                }
                 it.setOnClickListener(null) // Remove listener so it can't be double tapped
             }
             
@@ -95,21 +118,24 @@ class MainActivity : AppCompatActivity() {
                             // If it's still visible at the end of its cycle, it was missed
                             if (currentImage.visibility == View.VISIBLE) {
                                 currentImage.setOnClickListener(null)
-                                // Shake the board slightly to indicate a miss
-                                binding.flGameBoard.animate()
-                                    .translationXBy(10f)
-                                    .setDuration(50)
-                                    .withEndAction {
-                                        binding.flGameBoard.animate()
-                                            .translationXBy(-20f)
-                                            .setDuration(50)
-                                            .withEndAction {
-                                                binding.flGameBoard.animate()
-                                                    .translationXBy(10f)
-                                                    .setDuration(50)
-                                                    .start()
-                                            }.start()
-                                    }.start()
+                                // Only shake if a fruit was missed (missing a bomb is good!)
+                                if (!isBomb) {
+                                    // Shake the board slightly to indicate a miss
+                                    binding.flGameBoard.animate()
+                                        .translationXBy(10f)
+                                        .setDuration(50)
+                                        .withEndAction {
+                                            binding.flGameBoard.animate()
+                                                .translationXBy(-20f)
+                                                .setDuration(50)
+                                                .withEndAction {
+                                                    binding.flGameBoard.animate()
+                                                        .translationXBy(10f)
+                                                        .setDuration(50)
+                                                        .start()
+                                                }.start()
+                                        }.start()
+                                }
                             }
                         }
                         .start()
@@ -198,6 +224,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun hitBomb(view: View) {
+        // Penalty for hitting bomb: lose combo and lose 2 points
+        currentCombo = 0
+        score = maxOf(0, score - 2)
+        
+        playSound(soundGameOver) // Use game over sound as a negative feedback
+        
+        updateScoreText()
+        
+        // Show floating penalty text
+        showFloatingText(view, "-2", true)
+        
+        // Shake the screen violently
+        binding.root.animate()
+            .translationXBy(20f)
+            .setDuration(50)
+            .withEndAction {
+                binding.root.animate()
+                    .translationXBy(-40f)
+                    .setDuration(50)
+                    .withEndAction {
+                        binding.root.animate()
+                            .translationXBy(20f)
+                            .setDuration(50)
+                            .start()
+                    }.start()
+            }.start()
+
+        // Explode animation
+        view.animate()
+            .scaleX(1.5f)
+            .scaleY(1.5f)
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction {
+                view.visibility = View.INVISIBLE
+                view.alpha = 1f
+            }.start()
+    }
+
     fun increaseScore(view: View) {
         val currentTime = System.currentTimeMillis()
         
@@ -247,11 +313,12 @@ class MainActivity : AppCompatActivity() {
             }.start()
     }
 
-    private fun showFloatingText(view: View, text: String) {
+    private fun showFloatingText(view: View, text: String, isPenalty: Boolean = false) {
         val floatingText = TextView(this).apply {
             this.text = text
             textSize = 24f
-            setTextColor(resources.getColor(R.color.colorAccent, theme))
+            val colorRes = if (isPenalty) android.R.color.holo_red_dark else R.color.colorAccent
+            setTextColor(resources.getColor(colorRes, theme))
             typeface = android.graphics.Typeface.DEFAULT_BOLD
             setShadowLayer(4f, 0f, 4f, resources.getColor(R.color.colorPrimaryDark, theme))
         }

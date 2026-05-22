@@ -213,6 +213,17 @@
 
             </androidx.gridlayout.widget.GridLayout>
             
+            <!-- Bomb Image (Overlay) -->
+            <ImageView
+                android:id="@+id/ivBomb"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center"
+                android:visibility="invisible"
+                android:contentDescription="Bomb"
+                android:src="@android:drawable/ic_delete"
+                app:tint="@android:color/holo_red_dark" />
+            
             <!-- Floating text container -->
             <FrameLayout
                 android:id="@+id/flFloatingText"
