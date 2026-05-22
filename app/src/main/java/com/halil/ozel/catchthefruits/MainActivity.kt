@@ -211,11 +211,9 @@ class MainActivity : AppCompatActivity() {
             .setAudioAttributes(audioAttributes)
             .build()
             
-        // We will load dummy sounds for now, or skip if no raw resources exist
-        // In a real app, you would add .wav or .mp3 files to res/raw/
-        // soundPop = soundPool.load(this, R.raw.pop, 1)
-        // soundGameOver = soundPool.load(this, R.raw.game_over, 1)
-        // soundHighScore = soundPool.load(this, R.raw.high_score, 1)
+        soundPop = soundPool.load(this, R.raw.pop, 1)
+        soundGameOver = soundPool.load(this, R.raw.game_over, 1)
+        soundHighScore = soundPool.load(this, R.raw.high_score, 1)
     }
 
     private fun playSound(soundId: Int) {
