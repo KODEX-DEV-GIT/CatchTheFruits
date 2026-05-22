@@ -2,6 +2,8 @@ package com.halil.ozel.catchthefruits
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
@@ -49,6 +51,13 @@ class MainActivity : AppCompatActivity() {
     
     // Difficulty progression
     private var currentSwitchInterval = IMAGE_SWITCH_INTERVAL_MS
+    
+    // Sound variables
+    private lateinit var soundPool: SoundPool
+    private var soundPop = 0
+    private var soundGameOver = 0
+    private var soundHighScore = 0
+    private var isSoundEnabled = true
 
     private val imageSwitcher = object : Runnable {
         override fun run() {
@@ -89,7 +98,10 @@ class MainActivity : AppCompatActivity() {
         binding.catchFruits = this
         
         sharedPreferences = getSharedPreferences("CatchTheFruitsPrefs", Context.MODE_PRIVATE)
+        isSoundEnabled = sharedPreferences.getBoolean("SOUND_ENABLED", true)
         updateBestScoreText()
+        
+        setupSoundPool()
         
         MobileAds.initialize(this) {}
         
@@ -106,7 +118,55 @@ class MainActivity : AppCompatActivity() {
                 binding.ivPear, binding.ivStrawberry, binding.ivWatermelon
             )
         )
-        startGame()
+        
+        setupStartScreen()
+    }
+
+    private fun setupStartScreen() {
+        binding.llStartScreen.visibility = View.VISIBLE
+        
+        // Update sound button text based on saved preference
+        binding.btnToggleSound.text = if (isSoundEnabled) "SOUND: ON" else "SOUND: OFF"
+        
+        binding.btnStartGame.setOnClickListener {
+            binding.llStartScreen.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction {
+                    binding.llStartScreen.visibility = View.GONE
+                    startGame()
+                }.start()
+        }
+        
+        binding.btnToggleSound.setOnClickListener {
+            isSoundEnabled = !isSoundEnabled
+            sharedPreferences.edit().putBoolean("SOUND_ENABLED", isSoundEnabled).apply()
+            binding.btnToggleSound.text = if (isSoundEnabled) "SOUND: ON" else "SOUND: OFF"
+        }
+    }
+
+    private fun setupSoundPool() {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+            
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(3)
+            .setAudioAttributes(audioAttributes)
+            .build()
+            
+        // We will load dummy sounds for now, or skip if no raw resources exist
+        // In a real app, you would add .wav or .mp3 files to res/raw/
+        // soundPop = soundPool.load(this, R.raw.pop, 1)
+        // soundGameOver = soundPool.load(this, R.raw.game_over, 1)
+        // soundHighScore = soundPool.load(this, R.raw.high_score, 1)
+    }
+
+    private fun playSound(soundId: Int) {
+        if (isSoundEnabled && soundId != 0) {
+            soundPool.play(soundId, 1f, 1f, 0, 0, 1f)
+        }
     }
 
     fun increaseScore(view: View) {
@@ -123,6 +183,8 @@ class MainActivity : AppCompatActivity() {
         // Calculate points (base 1 + combo bonus)
         val pointsEarned = if (currentCombo >= 3) 2 else 1
         score += pointsEarned
+        
+        playSound(soundPop)
         
         updateScoreText()
         
@@ -261,6 +323,7 @@ class MainActivity : AppCompatActivity() {
         tvBestScoreMessage.text = "Best: $displayBest"
         
         if (isNewHighScore && score > 0) {
+            playSound(soundHighScore)
             tvNewHighScore.visibility = View.VISIBLE
             // Simple pulse animation for the high score text
             tvNewHighScore.animate()
@@ -270,6 +333,7 @@ class MainActivity : AppCompatActivity() {
                     tvNewHighScore.animate().scaleX(1f).scaleY(1f).setDuration(500).start()
                 }.start()
         } else {
+            playSound(soundGameOver)
             tvNewHighScore.visibility = View.GONE
         }
 
@@ -346,6 +410,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         gameTimer?.cancel()
         handler.removeCallbacks(imageSwitcher)
+        soundPool.release()
     }
 
     companion object {
