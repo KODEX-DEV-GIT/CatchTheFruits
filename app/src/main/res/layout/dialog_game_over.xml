@@ -9,13 +9,13 @@
         android:id="@+id/tvGameOverHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryDark"
+        android:background="@color/dialogHeader"
         android:fontFamily="sans-serif-black"
         android:gravity="center"
         android:padding="16dp"
-        android:text="GAME OVER"
-        android:textColor="@android:color/white"
-        android:textSize="20sp" />
+        android:text="SWEET ROUND OVER!"
+        android:textColor="@color/textColorWhite"
+        android:textSize="22sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -27,11 +27,34 @@
             android:id="@+id/tvScoreMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-bold"
+            android:fontFamily="sans-serif-black"
             android:gravity="center"
             android:text="Your score: 0"
             android:textColor="@color/colorPrimaryDark"
-            android:textSize="24sp" />
+            android:textSize="28sp" />
+            
+        <TextView
+            android:id="@+id/tvBestScoreMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="sans-serif-black"
+            android:gravity="center"
+            android:text="Best: 0"
+            android:textColor="@color/colorSecondaryDark"
+            android:textSize="18sp" />
+            
+        <TextView
+            android:id="@+id/tvNewHighScore"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="sans-serif-black"
+            android:gravity="center"
+            android:text="🎉 NEW HIGH SCORE! 🎉"
+            android:textColor="@color/colorAccent"
+            android:textSize="18sp"
+            android:visibility="gone" />
 
         <TextView
             android:layout_width="match_parent"
@@ -39,14 +62,26 @@
             android:layout_marginTop="16dp"
             android:fontFamily="sans-serif-medium"
             android:gravity="center"
-            android:text="WOULD YOU LIKE TO PLAY AGAIN?"
+            android:text="Ready for another fruit frenzy?"
+            android:textColor="@color/textColorSecondary"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btnWatchAd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_button_primary"
+            android:backgroundTint="@color/colorAccent"
+            android:fontFamily="sans-serif-black"
+            android:text="📺 WATCH AD FOR +10 SECONDS"
             android:textColor="@color/textColorPrimary"
             android:textSize="14sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
             <Button
@@ -55,10 +90,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_primary"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="sans-serif-black"
                 android:text="PLAY AGAIN"
-                android:textColor="@android:color/white"
-                android:textSize="14sp" />
+                android:textColor="@color/textColorWhite"
+                android:textSize="16sp" />
 
             <View
                 android:layout_width="16dp"
@@ -70,10 +105,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_secondary"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="sans-serif-black"
                 android:text="EXIT"
                 android:textColor="@color/colorPrimaryDark"
-                android:textSize="14sp" />
+                android:textSize="16sp" />
 
         </LinearLayout>
     </LinearLayout>

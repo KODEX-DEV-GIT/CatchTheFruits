@@ -17,6 +17,11 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.google.android.gms.ads.OnUserEarnedRewardListener
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.AdError
 import com.halil.ozel.catchthefruits.databinding.ActivityMainBinding
 import kotlin.random.Random
 
@@ -28,6 +33,11 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var gameTimer: CountDownTimer? = null
     private var mInterstitialAd: InterstitialAd? = null
+    private var mRewardedAd: RewardedAd? = null
+    
+    // Ad pacing variables
+    private var gamesPlayed = 0
+    private val INTERSTITIAL_FREQUENCY = 3 // Show interstitial every 3 games
 
     private val imageSwitcher = object : Runnable {
         override fun run() {
@@ -35,11 +45,27 @@ class MainActivity : AppCompatActivity() {
                 it.visibility = View.INVISIBLE 
                 it.scaleX = 0.5f
                 it.scaleY = 0.5f
+                it.rotation = 0f
             }
             val randomIndex = Random.nextInt(imageArray.size)
             val currentImage = imageArray[randomIndex]
             currentImage.visibility = View.VISIBLE
-            currentImage.animate().scaleX(1f).scaleY(1f).setDuration(200).start()
+            
+            // Cartoon pop-in animation
+            val randomRotation = Random.nextInt(-15, 15).toFloat()
+            currentImage.rotation = randomRotation
+            currentImage.animate()
+                .scaleX(1.1f)
+                .scaleY(1.1f)
+                .setDuration(150)
+                .withEndAction {
+                    currentImage.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                }.start()
+                
             handler.postDelayed(this, IMAGE_SWITCH_INTERVAL_MS)
         }
     }
@@ -57,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         binding.adView.loadAd(adRequest)
         
         loadInterstitialAd()
+        loadRewardedAd()
         
         imageArray.addAll(
             listOf(
@@ -71,27 +98,53 @@ class MainActivity : AppCompatActivity() {
     fun increaseScore(view: View) {
         score += 1
         updateScoreText()
-        view.animate().scaleX(0f).scaleY(0f).alpha(0f).setDuration(150).withEndAction {
-            view.visibility = View.INVISIBLE
-            view.alpha = 1f
-        }.start()
+        
+        // Pulse the score text
+        binding.tvScore.animate()
+            .scaleX(1.2f).scaleY(1.2f)
+            .setDuration(100)
+            .withEndAction {
+                binding.tvScore.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+            }.start()
+
+        // Squash and fade out the fruit
+        view.animate()
+            .scaleX(1.3f)
+            .scaleY(0.7f)
+            .setDuration(100)
+            .withEndAction {
+                view.animate()
+                    .scaleX(0f)
+                    .scaleY(0f)
+                    .alpha(0f)
+                    .setDuration(100)
+                    .withEndAction {
+                        view.visibility = View.INVISIBLE
+                        view.alpha = 1f
+                    }.start()
+            }.start()
     }
 
-    private fun startGame() {
-        score = 0
-        updateScoreText()
-        updateTimeText((GAME_DURATION_MS / TICK_INTERVAL_MS).toInt())
+    private fun startGame(extraTimeMs: Long = GAME_DURATION_MS) {
+        if (extraTimeMs == GAME_DURATION_MS) {
+            score = 0
+            updateScoreText()
+        }
+        
+        updateTimeText((extraTimeMs / TICK_INTERVAL_MS).toInt())
         imageArray.forEach { it.visibility = View.INVISIBLE }
 
         handler.removeCallbacks(imageSwitcher)
         handler.post(imageSwitcher)
 
         gameTimer?.cancel()
-        gameTimer = object : CountDownTimer(GAME_DURATION_MS, TICK_INTERVAL_MS) {
+        gameTimer = object : CountDownTimer(extraTimeMs, TICK_INTERVAL_MS) {
             override fun onFinish() {
                 binding.time = getString(R.string.time_up)
                 handler.removeCallbacks(imageSwitcher)
                 imageArray.forEach { it.visibility = View.INVISIBLE }
+                
+                gamesPlayed++
                 showGameOverDialog()
             }
 
@@ -105,30 +158,49 @@ class MainActivity : AppCompatActivity() {
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(this, getString(R.string.admob_interstitial_id), adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.d("MainActivity", adError.toString())
+                Log.d("MainActivity", "Interstitial ad failed to load: ${adError.message}")
                 mInterstitialAd = null
             }
 
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                Log.d("MainActivity", "Ad was loaded.")
+                Log.d("MainActivity", "Interstitial ad was loaded.")
                 mInterstitialAd = interstitialAd
             }
         })
     }
 
+    private fun loadRewardedAd() {
+        val adRequest = AdRequest.Builder().build()
+        RewardedAd.load(this, getString(R.string.admob_rewarded_id), adRequest, object : RewardedAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.d("MainActivity", "Rewarded ad failed to load: ${adError.message}")
+                mRewardedAd = null
+            }
+
+            override fun onAdLoaded(rewardedAd: RewardedAd) {
+                Log.d("MainActivity", "Rewarded ad was loaded.")
+                mRewardedAd = rewardedAd
+            }
+        })
+    }
+
     private fun showGameOverDialog() {
-        if (mInterstitialAd != null) {
-            mInterstitialAd?.show(this)
-            // Load the next interstitial ad for the next game over
-            loadInterstitialAd()
-        } else {
-            Log.d("MainActivity", "The interstitial ad wasn't ready yet.")
+        // Safe Interstitial Pacing: Only show every N games
+        if (gamesPlayed % INTERSTITIAL_FREQUENCY == 0) {
+            if (mInterstitialAd != null) {
+                mInterstitialAd?.show(this)
+                // Load the next interstitial ad for the next time it's needed
+                loadInterstitialAd()
+            } else {
+                Log.d("MainActivity", "The interstitial ad wasn't ready yet.")
+            }
         }
 
         val dialogView = layoutInflater.inflate(R.layout.dialog_game_over, null)
         val tvScoreMessage = dialogView.findViewById<TextView>(R.id.tvScoreMessage)
         val btnPlayAgain = dialogView.findViewById<Button>(R.id.btnPlayAgain)
         val btnExit = dialogView.findViewById<Button>(R.id.btnExit)
+        val btnWatchAd = dialogView.findViewById<Button>(R.id.btnWatchAd)
 
         tvScoreMessage.text = "Your score: $score"
 
@@ -138,6 +210,31 @@ class MainActivity : AppCompatActivity() {
             .create()
 
         dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        // Only show the rewarded ad button if an ad is actually loaded
+        if (mRewardedAd != null) {
+            btnWatchAd.visibility = View.VISIBLE
+            btnWatchAd.setOnClickListener {
+                mRewardedAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        // Load the next rewarded ad
+                        loadRewardedAd()
+                    }
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                        Log.d("MainActivity", "Rewarded ad failed to show.")
+                        mRewardedAd = null
+                    }
+                }
+                
+                mRewardedAd?.show(this, OnUserEarnedRewardListener { rewardItem ->
+                    // Reward the user with 10 extra seconds
+                    dialog.dismiss()
+                    startGame(10_000L) // 10 seconds extra
+                })
+            }
+        } else {
+            btnWatchAd.visibility = View.GONE
+        }
 
         btnPlayAgain.setOnClickListener {
             dialog.dismiss()
@@ -162,11 +259,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateScoreText() {
-        binding.score = getString(R.string.score_value, score)
+        binding.score = "⭐ $score"
     }
 
     private fun updateTimeText(seconds: Int) {
-        binding.time = getString(R.string.time_value, seconds)
+        binding.time = "⏱️ $seconds"
     }
 
     override fun onDestroy() {

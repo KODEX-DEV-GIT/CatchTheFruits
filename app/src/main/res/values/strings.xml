@@ -16,4 +16,5 @@ transId: ca-app-pub-4239528192908800/7873326599-->
     <string name="admob_app_id">ca-app-pub-4239528192908800~7440109538</string>
     <string name="admob_banner_id">ca-app-pub-4239528192908800/8507751416</string>
     <string name="admob_interstitial_id">ca-app-pub-4239528192908800/7873326599</string>
+    <string name="admob_rewarded_id">ca-app-pub-4239528192908800/3193815175</string> <!-- Google Test Rewarded ID -->
 </resources>

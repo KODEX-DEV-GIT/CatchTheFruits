@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#87CEEB</color>
-    <color name="colorPrimaryDark">#4682B4</color>
-    <color name="colorSecondary">#FFB6C1</color>
-    <color name="windowBackground">#F0F8FF</color>
-    <color name="textColorPrimary">#333333</color>
+    <!-- Cartoon Theme Colors -->
+    <color name="colorPrimary">#FF9800</color> <!-- Bright Orange -->
+    <color name="colorPrimaryDark">#F57C00</color>
+    <color name="colorSecondary">#4CAF50</color> <!-- Fresh Green -->
+    <color name="colorSecondaryDark">#388E3C</color>
+    <color name="colorAccent">#FFEB3B</color> <!-- Yellow -->
+    
+    <!-- Backgrounds -->
+    <color name="windowBackground">#E1F5FE</color> <!-- Light Sky Blue -->
+    <color name="boardBackground">#FFFFFF</color>
+    <color name="boardStroke">#B3E5FC</color>
+    
+    <!-- Text -->
+    <color name="textColorPrimary">#37474F</color> <!-- Dark Slate -->
+    <color name="textColorSecondary">#78909C</color>
+    <color name="textColorWhite">#FFFFFF</color>
+    
+    <!-- UI Elements -->
+    <color name="scoreBackground">#FFCC80</color>
+    <color name="timeBackground">#A5D6A7</color>
+    <color name="dialogBackground">#FFFFFF</color>
+    <color name="dialogHeader">#FF9800</color>
 </resources>
