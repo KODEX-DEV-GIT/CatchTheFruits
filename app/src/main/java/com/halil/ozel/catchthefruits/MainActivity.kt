@@ -1,5 +1,7 @@
 package com.halil.ozel.catchthefruits
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
@@ -34,10 +36,16 @@ class MainActivity : AppCompatActivity() {
     private var gameTimer: CountDownTimer? = null
     private var mInterstitialAd: InterstitialAd? = null
     private var mRewardedAd: RewardedAd? = null
+    private lateinit var sharedPreferences: SharedPreferences
     
     // Ad pacing variables
     private var gamesPlayed = 0
     private val INTERSTITIAL_FREQUENCY = 3 // Show interstitial every 3 games
+    
+    // Combo system variables
+    private var lastTapTime = 0L
+    private var currentCombo = 0
+    private val COMBO_TIME_WINDOW_MS = 800L // Must tap within 800ms to keep combo
 
     private val imageSwitcher = object : Runnable {
         override fun run() {
@@ -77,6 +85,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.catchFruits = this
         
+        sharedPreferences = getSharedPreferences("CatchTheFruitsPrefs", Context.MODE_PRIVATE)
+        updateBestScoreText()
+        
         MobileAds.initialize(this) {}
         
         val adRequest = AdRequest.Builder().build()
@@ -96,12 +107,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun increaseScore(view: View) {
-        score += 1
+        val currentTime = System.currentTimeMillis()
+        
+        // Combo Logic
+        if (currentTime - lastTapTime <= COMBO_TIME_WINDOW_MS) {
+            currentCombo++
+        } else {
+            currentCombo = 1
+        }
+        lastTapTime = currentTime
+        
+        // Calculate points (base 1 + combo bonus)
+        val pointsEarned = if (currentCombo >= 3) 2 else 1
+        score += pointsEarned
+        
         updateScoreText()
         
-        // Pulse the score text
+        // Pulse the score text (bigger pulse for combo)
+        val scaleTarget = if (currentCombo >= 3) 1.4f else 1.2f
         binding.tvScore.animate()
-            .scaleX(1.2f).scaleY(1.2f)
+            .scaleX(scaleTarget).scaleY(scaleTarget)
             .setDuration(100)
             .withEndAction {
                 binding.tvScore.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
@@ -128,6 +153,7 @@ class MainActivity : AppCompatActivity() {
     private fun startGame(extraTimeMs: Long = GAME_DURATION_MS) {
         if (extraTimeMs == GAME_DURATION_MS) {
             score = 0
+            currentCombo = 0
             updateScoreText()
         }
         
@@ -185,6 +211,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showGameOverDialog() {
+        // Check and save best score
+        val currentBest = sharedPreferences.getInt("BEST_SCORE", 0)
+        var isNewHighScore = false
+        
+        if (score > currentBest) {
+            isNewHighScore = true
+            sharedPreferences.edit().putInt("BEST_SCORE", score).apply()
+            updateBestScoreText()
+        }
+
         // Safe Interstitial Pacing: Only show every N games
         if (gamesPlayed % INTERSTITIAL_FREQUENCY == 0) {
             if (mInterstitialAd != null) {
@@ -198,11 +234,29 @@ class MainActivity : AppCompatActivity() {
 
         val dialogView = layoutInflater.inflate(R.layout.dialog_game_over, null)
         val tvScoreMessage = dialogView.findViewById<TextView>(R.id.tvScoreMessage)
+        val tvBestScoreMessage = dialogView.findViewById<TextView>(R.id.tvBestScoreMessage)
+        val tvNewHighScore = dialogView.findViewById<TextView>(R.id.tvNewHighScore)
         val btnPlayAgain = dialogView.findViewById<Button>(R.id.btnPlayAgain)
         val btnExit = dialogView.findViewById<Button>(R.id.btnExit)
         val btnWatchAd = dialogView.findViewById<Button>(R.id.btnWatchAd)
 
         tvScoreMessage.text = "Your score: $score"
+        
+        val displayBest = if (isNewHighScore) score else currentBest
+        tvBestScoreMessage.text = "Best: $displayBest"
+        
+        if (isNewHighScore && score > 0) {
+            tvNewHighScore.visibility = View.VISIBLE
+            // Simple pulse animation for the high score text
+            tvNewHighScore.animate()
+                .scaleX(1.1f).scaleY(1.1f)
+                .setDuration(500)
+                .withEndAction {
+                    tvNewHighScore.animate().scaleX(1f).scaleY(1f).setDuration(500).start()
+                }.start()
+        } else {
+            tvNewHighScore.visibility = View.GONE
+        }
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
@@ -253,13 +307,20 @@ class MainActivity : AppCompatActivity() {
         gameTimer?.cancel()
         handler.removeCallbacks(imageSwitcher)
         score = 0
+        currentCombo = 0
         updateScoreText()
         updateTimeText(0)
         imageArray.forEach { it.visibility = View.INVISIBLE }
     }
 
     private fun updateScoreText() {
-        binding.score = "⭐ $score"
+        val comboText = if (currentCombo >= 3) " 🔥x$currentCombo" else ""
+        binding.score = "⭐ $score$comboText"
+    }
+
+    private fun updateBestScoreText() {
+        val best = sharedPreferences.getInt("BEST_SCORE", 0)
+        binding.bestScore = "🏆 $best"
     }
 
     private fun updateTimeText(seconds: Int) {
