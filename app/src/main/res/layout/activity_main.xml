@@ -21,109 +21,117 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"
+        android:background="@color/windowBackground"
+        android:padding="24dp"
         tools:context=".MainActivity">
 
         <androidx.gridlayout.widget.GridLayout
             android:id="@+id/gridLayout"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginBottom="16dp"
-            android:columnCount="3"
-            android:rowCount="3"
+            android:layout_marginBottom="24dp"
+            app:columnCount="3"
             app:layout_constraintBottom_toTopOf="@id/tvScore"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvTime">
+            app:layout_constraintTop_toBottomOf="@id/tvTime"
+            app:rowCount="3">
 
             <ImageView
                 android:id="@+id/ivApple"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="0"
                 app:layout_row="0"
                 app:srcCompat="@drawable/apple" />
 
             <ImageView
                 android:id="@+id/ivBanana"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="1"
                 app:layout_row="0"
                 app:srcCompat="@drawable/bananas" />
 
             <ImageView
                 android:id="@+id/ivCherry"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="2"
                 app:layout_row="0"
                 app:srcCompat="@drawable/cherry" />
 
             <ImageView
                 android:id="@+id/ivGrapes"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="0"
                 app:layout_row="1"
                 app:srcCompat="@drawable/grapes" />
 
             <ImageView
                 android:id="@+id/ivKiwi"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="1"
                 app:layout_row="1"
                 app:srcCompat="@drawable/kiwi" />
 
             <ImageView
                 android:id="@+id/ivPear"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="2"
                 app:layout_row="1"
                 app:srcCompat="@drawable/pear" />
 
             <ImageView
                 android:id="@+id/ivOrange"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="0"
                 app:layout_row="2"
                 app:srcCompat="@drawable/orange" />
 
             <ImageView
                 android:id="@+id/ivWatermelon"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="1"
                 app:layout_row="2"
                 app:srcCompat="@drawable/watermelon" />
 
             <ImageView
                 android:id="@+id/ivStrawberry"
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
+                android:layout_margin="8dp"
                 android:contentDescription="@string/fruit"
-                android:onClick="@{() -> catchFruits.increaseScore()}"
+                android:onClick="@{(v) -> catchFruits.increaseScore(v)}"
                 app:layout_column="2"
                 app:layout_row="2"
                 app:srcCompat="@drawable/strawberry" />
@@ -134,10 +142,12 @@
             android:id="@+id/tvTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="sans-serif-medium"
             android:text="@{time}"
-            android:textSize="36sp"
+            android:textColor="@color/textColorPrimary"
+            android:textSize="32sp"
             app:layout_constraintBottom_toTopOf="@id/gridLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -147,12 +157,24 @@
             android:id="@+id/tvScore"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="24dp"
+            android:fontFamily="sans-serif-black"
             android:text="@{score}"
-            android:textSize="30sp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="36sp"
+            app:layout_constraintBottom_toTopOf="@id/adView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/gridLayout" />
+
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:adSize="BANNER"
+            app:adUnitId="@string/admob_banner_id"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

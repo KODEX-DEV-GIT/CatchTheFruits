@@ -6,9 +6,17 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.ImageView
+import android.widget.Button
+import android.widget.TextView
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.halil.ozel.catchthefruits.databinding.ActivityMainBinding
 import kotlin.random.Random
 
@@ -19,20 +27,37 @@ class MainActivity : AppCompatActivity() {
     private val imageArray = mutableListOf<ImageView>()
     private val handler = Handler(Looper.getMainLooper())
     private var gameTimer: CountDownTimer? = null
+    private var mInterstitialAd: InterstitialAd? = null
 
     private val imageSwitcher = object : Runnable {
         override fun run() {
-            imageArray.forEach { it.visibility = View.INVISIBLE }
+            imageArray.forEach { 
+                it.visibility = View.INVISIBLE 
+                it.scaleX = 0.5f
+                it.scaleY = 0.5f
+            }
             val randomIndex = Random.nextInt(imageArray.size)
-            imageArray[randomIndex].visibility = View.VISIBLE
+            val currentImage = imageArray[randomIndex]
+            currentImage.visibility = View.VISIBLE
+            currentImage.animate().scaleX(1f).scaleY(1f).setDuration(200).start()
             handler.postDelayed(this, IMAGE_SWITCH_INTERVAL_MS)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         binding.catchFruits = this
+        
+        MobileAds.initialize(this) {}
+        
+        val adRequest = AdRequest.Builder().build()
+        binding.adView.loadAd(adRequest)
+        
+        loadInterstitialAd()
+        
         imageArray.addAll(
             listOf(
                 binding.ivApple, binding.ivBanana, binding.ivCherry,
@@ -43,9 +68,13 @@ class MainActivity : AppCompatActivity() {
         startGame()
     }
 
-    fun increaseScore() {
+    fun increaseScore(view: View) {
         score += 1
         updateScoreText()
+        view.animate().scaleX(0f).scaleY(0f).alpha(0f).setDuration(150).withEndAction {
+            view.visibility = View.INVISIBLE
+            view.alpha = 1f
+        }.start()
     }
 
     private fun startGame() {
@@ -72,14 +101,55 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
+    private fun loadInterstitialAd() {
+        val adRequest = AdRequest.Builder().build()
+        InterstitialAd.load(this, getString(R.string.admob_interstitial_id), adRequest, object : InterstitialAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.d("MainActivity", adError.toString())
+                mInterstitialAd = null
+            }
+
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                Log.d("MainActivity", "Ad was loaded.")
+                mInterstitialAd = interstitialAd
+            }
+        })
+    }
+
     private fun showGameOverDialog() {
-        AlertDialog.Builder(this)
+        if (mInterstitialAd != null) {
+            mInterstitialAd?.show(this)
+            // Load the next interstitial ad for the next game over
+            loadInterstitialAd()
+        } else {
+            Log.d("MainActivity", "The interstitial ad wasn't ready yet.")
+        }
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_game_over, null)
+        val tvScoreMessage = dialogView.findViewById<TextView>(R.id.tvScoreMessage)
+        val btnPlayAgain = dialogView.findViewById<Button>(R.id.btnPlayAgain)
+        val btnExit = dialogView.findViewById<Button>(R.id.btnExit)
+
+        tvScoreMessage.text = "Your score: $score"
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
             .setCancelable(false)
-            .setTitle(getString(R.string.game_name))
-            .setMessage(getString(R.string.game_over_message, score))
-            .setPositiveButton(getString(R.string.yes)) { _, _ -> startGame() }
-            .setNegativeButton(getString(R.string.no)) { _, _ -> stopGame() }
-            .show()
+            .create()
+
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        btnPlayAgain.setOnClickListener {
+            dialog.dismiss()
+            startGame()
+        }
+
+        btnExit.setOnClickListener {
+            dialog.dismiss()
+            stopGame()
+        }
+
+        dialog.show()
     }
 
     private fun stopGame() {

@@ -1,16 +1,17 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 android {
     namespace 'com.halil.ozel.catchthefruits'
-    compileSdk 34
+    compileSdk 37
 
     defaultConfig {
-        applicationId "com.halil.ozel.catchthefruits"
-        minSdk 21
-        targetSdk 34
+        applicationId "com.halil.sonce.ozel.catchthefruits"
+        minSdk 28
+        targetSdk 37
         versionCode 1
         versionName "1.0"
     }
@@ -24,21 +25,24 @@ android {
 
     buildFeatures {
         dataBinding true
+        viewBinding true
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
-    }
+//    kotlinOptions {
+//        jvmTarget = '17'
+//    }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.gridlayout:gridlayout:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.14.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.gridlayout:gridlayout:1.1.0'
+    implementation 'androidx.core:core-splashscreen:1.2.0'
+    implementation 'com.google.android.gms:play-services-ads:25.2.0'
 }
